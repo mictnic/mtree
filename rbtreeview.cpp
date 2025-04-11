@@ -18,7 +18,7 @@ rbtreeview::rbtreeview(QWidget* parent /*= nullptr*/, Qt::WindowFlags f /*= Qt::
 	m_rbTree.addNode(5);
 	m_rbTree.addNode(3);
 	m_rbTree.addNode(2);
-// 	m_rbTree.addNode(8);
+ 	m_rbTree.addNode(8);
 // 	m_rbTree.addNode(7);
 // 	m_rbTree.addNode(6);
 // 	m_rbTree.addNode(9);
@@ -38,28 +38,61 @@ void rbtreeview::onAdd()
 void rbtreeview::paintEvent(QPaintEvent* event)
 {
  	QPainter painter(this);
+	auto font = painter.font();
+	font.setPointSize(15);
+	painter.setFont(font);
  
-// 	painter.drawLine(QPoint(0,0), QPoint(100,100));
-// 
-// 	painter.setBackground(QBrush(Qt::red));
-// 	painter.setBrush(QBrush(Qt::red));
-// 	painter.drawEllipse(QRect(QPoint(100, 100), QPoint(120, 120)));
-
-	// 获取最大深度
-	auto depth = m_rbTree.getDepth();
-	if (depth == 0)
+	auto root = m_rbTree.getRoot();
+	if (nullptr == root)
 	{
 		return;
 	}
 
-	std::map<rbnode*, std::pair<int, int> > node2Fid;
+	std::map<rbnode*, int> node2Order;
+	int order = 0;
+	{
+		std::deque<rbnode*> vv;
+		if (nullptr != root)
+		{
+			vv.push_back(root);
+		}
+		bool bReachRight = true;
+		while (!vv.empty())
+		{
+			auto curr = vv.front();
+			if (bReachRight)
+			{
+				while (nullptr != curr->left)
+				{
+					vv.push_front(curr->left);
+					curr = curr->left;
+				}
+				bReachRight = false;
+			}
+			else
+			{
+				node2Order[curr] = order++;
+				vv.pop_front();
+				if (nullptr != curr->right)
+				{
+					vv.push_front(curr->right);
+					bReachRight = true;
+				}
+			}
+		}
+	}
 
+	// 待绘制的圆形
+	std::map<rbnode*, QRect> node2Cen;
+
+	int r = 30;
+	int h = 45;
 	int row = 0;
 	int col = 0;
 	std::deque<rbnode*> nodes;
 	std::deque<rbnode*> nextNodes;
 	int hbeg = 50;
-	int woff = width() / 2 - (pow(2, depth) - 1) * 20 / 2;
+	int wbeg = (width() - r * (order + 1)) / 2;
 	nodes.push_back(m_rbTree.getRoot());
 	while (!nodes.empty() || !nextNodes.empty())
 	{
@@ -85,36 +118,27 @@ void rbtreeview::paintEvent(QPaintEvent* event)
 			continue;
 		}
 
-		int nFid = 0;
-		int pcen = 0;
-		if (nullptr == node->parent)
-		{
-			nFid = pow(2, depth - 1) / 2;
-		}
-		else
-		{
-			auto ite = node2Fid.find(node->parent);
-			assert(ite != node2Fid.end());
-			auto nPFid = ite->second.first;
-			nFid = nPFid + (node == node->parent->left ? -1 : 1) * ((nPFid + 1) / 2);
-			pcen = ite->second.second;
-		}
-
 		nextNodes.push_back(node->left);
 		nextNodes.push_back(node->right);
 
-		auto cen = woff + 10 + nFid * 20;
-		auto hig = row * 40 + hbeg;
+		auto cen = wbeg + r/2 + node2Order[node] * r;
+		auto hig = row * h + hbeg;
 
-		node2Fid[node] = std::make_pair(nFid, cen);
-
-		painter.setBrush(QBrush(node->red ? Qt::red : Qt::lightGray));
-		painter.drawEllipse(QRect(QPoint(cen - 10, hig - 10), QPoint(cen + 10, hig + 10)));
-		painter.drawText(QRect(QPoint(cen - 10, hig - 10), QPoint(cen + 10, hig + 10)), Qt::AlignCenter, QString::number(node->val));
 		if (nullptr != node->parent)
 		{
-			painter.drawLine(QPoint(cen, hig), QPoint(pcen, hig - 40));
+			auto pcen = wbeg + r/2 + node2Order[node->parent] * r;
+			painter.drawLine(QPoint(cen, hig), QPoint(pcen, hig - h));
 		}
+
+		node2Cen[node] = QRect(QPoint(cen - r / 2, hig - r / 2), QPoint(cen + r / 2, hig + r / 2));
 		col++;
+	}
+
+
+	for (auto& r : node2Cen)
+	{
+		painter.setBrush(QBrush(r.first->red ? Qt::red : Qt::lightGray, Qt::SolidPattern));
+		painter.drawEllipse(r.second);
+		painter.drawText(r.second, Qt::AlignCenter, QString::number(r.first->val));
 	}
 }
