@@ -1,5 +1,6 @@
 ﻿#include "rbtree.h"
 
+#include <deque>
 #include <QApplication>
 #include <QWidget>
 #include <QEvent>
@@ -14,49 +15,61 @@ rbtree::~rbtree()
 
 }
 
-void rbtree::addNode(int val)
+void rbtree::addNode(int key)
 {
-	if (nullptr == m_root)
+	// 查找节点
+	rbnode** current = nullptr;
+	rbnode* parent = nullptr;
+	innerfindNode(&parent, current, key);
+	if (nullptr != (*current))	// 已有关键字
 	{
-		// 根节点默认黑色
-		m_root = new rbnode();
-		m_root->val = val;
+		auto next = &(*current)->next;
+		while (*next) next = &(*next)->next;
+		*next = new rbnode();
+		(*next)->key = key;
+	}
+	else // 未找到关键字
+	{
+		*current = new rbnode();
+		(*current)->key = key;
+		(*current)->parent = parent;
+		(*current)->red = true;
+
+		// 维持平衡，进行调整
+		modify(parent, *current);
+	}
+}
+
+void rbtree::delNode(int key)
+{
+	// 找到节点
+	rbnode** current = nullptr;
+	rbnode* parent = nullptr;
+	innerfindNode(&parent, current, key);
+
+	auto cur = *current;
+	if (nullptr == cur)
+	{
 		return;
 	}
 
-	// 找到插入的节点
-	auto current = &m_root;
-	auto parent = m_root;
-	while (*current)
+	auto next = cur->next;
+	if (nullptr != next)
 	{
-		if (val <= (*current)->val)
-		{
-			parent = *current;
-			current = &(*current)->left;
-		}
-		else
-		{
-			parent = *current;
-			current = &(*current)->right;
-		}
+		cur->next = next->next;
+		delete next;
+		return;
 	}
-	*current = new rbnode();
-	(*current)->val = val;
-	(*current)->parent = parent;
-	(*current)->red = true;
 
-	// 维持平衡，进行调整
-	modify(parent, *current);
-}
-
-void rbtree::delNode(int val)
-{
 
 }
 
-bool rbtree::findNode(int val)
+rbnode* rbtree::findNode(int key)
 {
-	return true;
+	rbnode** current = nullptr;
+	rbnode* parent = nullptr;
+	innerfindNode(&parent, current, key);
+	return *current;
 }
 
 rbnode* rbtree::getRoot()
@@ -178,3 +191,25 @@ int rbtree::innerGetDepth(rbnode* node)
 	return l >= r ? l + 1 : r + 1;
 }
 
+void rbtree::innerfindNode(rbnode** parent, rbnode**& current, int key)
+{
+	current = &m_root;
+	*parent = m_root;
+	while (*current && (*current)->key != key)
+	{
+		if (key < (*current)->key)
+		{
+			*parent = *current;
+			current = &(*current)->left;
+		}
+		else if (key > (*current)->key)
+		{
+			*parent = *current;
+			current = &(*current)->right;
+		}
+		else
+		{
+			assert(false);
+		}
+	}
+}
