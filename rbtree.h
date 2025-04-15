@@ -39,8 +39,11 @@ public:
 	int getDepth();
 
 protected:
-	// 调整
-	void modify(rbnode* parent, rbnode* current);
+	// 添加节点后调整
+	void add_modify(rbnode* parent, rbnode* current);
+
+	// 删除节点后调整
+	void del_modify(rbnode* parent, rbnode* current);
 
 	// 旋转
 	void rotate(rbnode* parent, rbnode* current);

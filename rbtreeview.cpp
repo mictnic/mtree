@@ -38,12 +38,20 @@ rbtreeview::rbtreeview(QWidget* parent /*= nullptr*/, Qt::WindowFlags f /*= Qt::
 	m_rbTree.addNode(3);
 	m_rbTree.addNode(2);
  	m_rbTree.addNode(8);
-// 	m_rbTree.addNode(7);
-// 	m_rbTree.addNode(6);
-// 	m_rbTree.addNode(9);
-// 	m_rbTree.addNode(0);
-// 	m_rbTree.addNode(4);
-// 	m_rbTree.addNode(1);
+ 	m_rbTree.addNode(7);
+ 	m_rbTree.addNode(6);
+ 	m_rbTree.addNode(9);
+ 	m_rbTree.addNode(0);
+ 	m_rbTree.addNode(4);
+ 	m_rbTree.addNode(1);
+	m_rbTree.addNode(10);
+	m_rbTree.addNode(12);
+	m_rbTree.addNode(11);
+	m_rbTree.addNode(13);
+	m_rbTree.addNode(19);
+	m_rbTree.addNode(15);
+	m_rbTree.addNode(16);
+	m_rbTree.addNode(17);
 
 	connect(m_pBtnAdd, SIGNAL(clicked()), SLOT(onAdd()));
 	connect(m_pBtnDel, SIGNAL(clicked()), SLOT(onDel()));

@@ -36,7 +36,7 @@ void rbtree::addNode(int key)
 		(*current)->red = true;
 
 		// 维持平衡，进行调整
-		modify(parent, *current);
+		add_modify(parent, *current);
 	}
 }
 
@@ -61,7 +61,22 @@ void rbtree::delNode(int key)
 		return;
 	}
 
+	// 真实需要删除的节点
+	if (nullptr != cur->left && nullptr != cur->right)
+	{
+		// 找到左子树中最大节点
+		auto left_max_node = cur->left;
+		while (nullptr != left_max_node->right)
+		{
+			left_max_node = left_max_node->right;
+		}
 
+		std::swap(cur->key, left_max_node->key);
+		cur = left_max_node;
+		parent = cur->parent;
+	}
+
+	del_modify(parent, cur);
 }
 
 rbnode* rbtree::findNode(int key)
@@ -82,7 +97,7 @@ int rbtree::getDepth()
 	return innerGetDepth(m_root);
 }
 
-void rbtree::modify(rbnode* parent, rbnode* current)
+void rbtree::add_modify(rbnode* parent, rbnode* current)
 {
 	//// 分情况讨论
 	//1.根节点，不需要调整
@@ -115,7 +130,7 @@ void rbtree::modify(rbnode* parent, rbnode* current)
 		else
 		{
 			rotate(parent, current);
-			modify(current, parent);
+			add_modify(current, parent);
 		}
 		return;
 	}
@@ -124,7 +139,143 @@ void rbtree::modify(rbnode* parent, rbnode* current)
 	parent->parent->red = true;
 	parent->red = false;
 	uncle->red = false;
-	modify(parent->parent->parent, parent->parent);	// 递归向上调整
+	add_modify(parent->parent->parent, parent->parent);	// 递归向上调整
+}
+
+void rbtree::del_modify(rbnode* parent, rbnode* current)
+{
+	//1. 删除的是根节点
+	if (current == m_root)
+	{
+		m_root = (nullptr != current->left ? current->left : current->right);
+		if (nullptr != m_root)
+		{
+			m_root->parent = nullptr;
+			m_root->red = false;
+		}
+
+		delete current;
+		return;
+	}
+
+	//2. 删除的是红色节点
+	if (current->red)
+	{
+		auto pcur = (current == parent->left ? &parent->left : &parent->right);
+		*pcur = (nullptr != current->left ? current->left : current->right);
+		if (*pcur)
+		{
+			(*pcur)->parent = parent;
+		}
+		
+		delete current;
+		return;
+	}
+
+	//3. 删除的是黑色节点
+	//3.1 删除的节点有左孩子或者右孩子，则必为红色节点
+	auto pcur = (current == parent->left ? &parent->left : &parent->right);
+	if (nullptr != current->left || nullptr != current->right)
+	{
+		*pcur = (nullptr != current->left ? current->left : current->right);
+		(*pcur)->parent = parent;
+		(*pcur)->red = false;
+
+		delete current;
+		return;
+	}
+
+	//3.2 删除的节点没有子节点
+	//3.2.1 父节点为红色
+	auto pother = (current == parent->left ? &parent->right : &parent->left);
+	auto other = *pother;
+	if (parent->red)
+	{
+		if ((nullptr != other->left && nullptr != other->right) ||
+			(parent->left == other && nullptr != other->left) ||
+			(parent->right == other && nullptr != other->right))
+		{
+			*pcur = nullptr;
+			delete current;
+			rotate(parent, *pother);
+			other->red = true;
+			other->left->red = other->right->red = false;
+			return;
+		}
+		else if (nullptr != other->left)
+		{
+			other->red = true;
+			other->left->red = false;
+			rotate(other, other->left);
+			del_modify(parent, current);
+			return;
+		}
+		else if (nullptr != other->right)
+		{
+			other->red = true;
+			other->right->red = false;
+			rotate(other, other->right);
+			del_modify(parent, current);
+			return;
+		}
+		else
+		{
+			*pcur = nullptr;
+			delete current;
+			rotate(parent, *pother);
+			return;
+		}
+	}
+	
+	//3.2.2 父节点为黑色
+	//3.2.2.1 兄弟节点为红色
+	if (other->red)
+	{
+		// other必定有两个黑色子节点
+		other->red = false;
+		other == parent->left ? other->right->red = true : other->left->red = true;
+		*pcur = nullptr;
+		delete current;
+		rotate(parent, other);
+		return;
+	}
+
+	//3.2.2.2 兄弟节点为黑色
+	if ((nullptr != other->left && nullptr != other->right) ||
+		(parent->left == other && nullptr != other->left) ||
+		(parent->right == other && nullptr != other->right))
+	{
+		*pcur = nullptr;
+		delete current;
+		other == parent->left ? other->left->red = false : other->right->red = false;
+		rotate(parent, *pother);
+		return;
+	}
+
+	// 需要先旋转一次
+	if (nullptr != other->left)
+	{
+		*pcur = nullptr;
+		delete current;
+		other->left->red = false;
+		rotate(other, other->left);
+		rotate(parent, *pother);
+		return;
+	}
+
+	if (nullptr != other->right)
+	{
+		*pcur = nullptr;
+		delete current;
+		other->right->red = false;
+		rotate(other, other->right);
+		rotate(parent, *pother);
+		return;
+	}
+	
+	// 待删节点黑无子节点 父节点黑 兄弟节点黑无子节点
+	// 递归向上查找红色节点
+
 }
 
 void rbtree::rotate(rbnode* parent, rbnode* current)
