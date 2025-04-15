@@ -130,7 +130,7 @@ void rbtree::add_modify(rbnode* parent, rbnode* current)
 		else
 		{
 			rotate(parent, current);
-			add_modify(current, parent);
+			add_modify(current, parent);	// -> 3.1
 		}
 		return;
 	}
@@ -173,7 +173,7 @@ void rbtree::del_modify(rbnode* parent, rbnode* current)
 	}
 
 	//3. 删除的是黑色节点
-	//3.1 删除的节点有左孩子或者右孩子，则必为红色节点
+	//3.1 删除的节点有左孩子或者右孩子，则必为红色节点（否则不满足路径上黑色节点个数一致的性质）
 	auto pcur = (current == parent->left ? &parent->left : &parent->right);
 	if (nullptr != current->left || nullptr != current->right)
 	{
@@ -277,18 +277,19 @@ void rbtree::del_modify(rbnode* parent, rbnode* current)
 	*pcur = nullptr;
 	delete current;
 
-	// 递归向上调整
+	// 双黑节点处理
 	del_modify_double_black(parent, *pcur);
 }
 
 void rbtree::del_modify_double_black(rbnode* parent, rbnode* current)
 {
+	// 0. 父节点为空，调整结束
 	if (nullptr == parent)
 	{
 		return;
 	}
 
-	// 1. 刚被删除的节点，染红
+	// 1. 刚被删除的节点，将兄弟节点染红
 	if (nullptr == current)
 	{
 		current == parent->left ? parent->right->red = true : parent->left->red = true;

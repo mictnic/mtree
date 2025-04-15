@@ -27,6 +27,7 @@ protected:
 protected:
 	void paintEvent(QPaintEvent* event) override;
 
+	// Êó±êË«»÷
 	virtual void mouseDoubleClickEvent(QMouseEvent* event);
 
 private:
