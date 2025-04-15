@@ -274,8 +274,76 @@ void rbtree::del_modify(rbnode* parent, rbnode* current)
 	}
 	
 	// 待删节点黑无子节点 父节点黑 兄弟节点黑无子节点
-	// 递归向上查找红色节点
+	*pcur = nullptr;
+	delete current;
 
+	// 递归向上调整
+	del_modify_double_black(parent, *pcur);
+}
+
+void rbtree::del_modify_double_black(rbnode* parent, rbnode* current)
+{
+	if (nullptr == parent)
+	{
+		return;
+	}
+
+	// 1. 刚被删除的节点，染红
+	if (nullptr == current)
+	{
+		current == parent->left ? parent->right->red = true : parent->left->red = true;
+		del_modify_double_black(parent->parent, parent);
+		return;
+	}
+
+	// 2. 父节点红色，旋转后恢复性质
+	if (parent->red)
+	{
+		auto other = parent->left == current ? parent->right : parent->left;
+		rotate(parent, other);
+		return;
+	}
+
+	// 3. 父节点黑色，兄弟节点红色，旋转后变色，恢复性质
+	auto pbrother = parent->left == current ? &parent->right : &parent->left;
+	if ((*pbrother)->red)
+	{
+		(*pbrother)->red = false;
+		parent->red = true;
+		rotate(parent, *pbrother);
+		return;
+	}
+
+	// 4. 父节点黑色，兄弟节点黑色，兄弟子节点红色
+	auto brother = *pbrother;
+	if (brother->left->red || brother->right->red)
+	{
+		auto other = brother->left->red ? brother->left : brother->right;
+		// 4a
+		if ((brother->left->red && parent->left == brother) ||
+			(brother->right->red && parent->right == brother))
+		{
+			rotate(parent, brother);
+			other->red = false;
+			return;
+		}
+
+		// 4b
+		if ((brother->left->red && parent->right == brother) ||
+			(brother->right->red && parent->left == brother))
+		{
+			rotate(brother, other);
+			brother->red = true;
+			other->red = false;
+		}
+		del_modify_double_black(parent, current);	// -> 4a
+		return;
+	}
+
+	// 5. 父节点黑 兄弟节点黑 兄弟节点子节点都是黑
+	// 把兄弟节点染成红色，递归向上调整
+	brother->red = true;
+	del_modify_double_black(parent->parent, parent);
 }
 
 void rbtree::rotate(rbnode* parent, rbnode* current)

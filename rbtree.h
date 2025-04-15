@@ -45,6 +45,9 @@ protected:
 	// 删除节点后调整
 	void del_modify(rbnode* parent, rbnode* current);
 
+	// 双黑节点调整
+	void del_modify_double_black(rbnode* parent, rbnode* current);
+
 	// 旋转
 	void rotate(rbnode* parent, rbnode* current);
 

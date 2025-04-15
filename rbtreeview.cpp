@@ -6,6 +6,7 @@
 #include <QPushButton>
 #include <QSpinBox>
 #include <QBoxLayout>
+#include <QMouseEvent>
 
 #define L8B(x) QString::fromLocal8Bit(x)
 
@@ -34,24 +35,21 @@ rbtreeview::rbtreeview(QWidget* parent /*= nullptr*/, Qt::WindowFlags f /*= Qt::
 	m_pBtnFind = new QPushButton(L8B("查找"), this);
 	pLayout->addWidget(m_pBtnFind);
 
+	m_rbTree.addNode(8);
 	m_rbTree.addNode(5);
 	m_rbTree.addNode(3);
-	m_rbTree.addNode(2);
- 	m_rbTree.addNode(8);
- 	m_rbTree.addNode(7);
- 	m_rbTree.addNode(6);
- 	m_rbTree.addNode(9);
- 	m_rbTree.addNode(0);
- 	m_rbTree.addNode(4);
- 	m_rbTree.addNode(1);
-	m_rbTree.addNode(10);
-	m_rbTree.addNode(12);
+// 	m_rbTree.addNode(4);
+// 	m_rbTree.addNode(2);
+	m_rbTree.addNode(6);
+	m_rbTree.addNode(9);
 	m_rbTree.addNode(11);
-	m_rbTree.addNode(13);
-	m_rbTree.addNode(19);
-	m_rbTree.addNode(15);
-	m_rbTree.addNode(16);
-	m_rbTree.addNode(17);
+ 	m_rbTree.addNode(10);
+  	m_rbTree.addNode(12);
+  	m_rbTree.addNode(13);
+//  	m_rbTree.addNode(19);
+//  	m_rbTree.addNode(15);
+//  	m_rbTree.addNode(16);
+//  	m_rbTree.addNode(17);
 
 	connect(m_pBtnAdd, SIGNAL(clicked()), SLOT(onAdd()));
 	connect(m_pBtnDel, SIGNAL(clicked()), SLOT(onDel()));
@@ -80,6 +78,8 @@ void rbtreeview::onFind()
 
 void rbtreeview::paintEvent(QPaintEvent* event)
 {
+	m_node2Rect.clear();
+
  	QPainter painter(this);
 	painter.setRenderHint(QPainter::Antialiasing, true);
 	auto font = painter.font();
@@ -127,7 +127,7 @@ void rbtreeview::paintEvent(QPaintEvent* event)
 	}
 
 	// 待绘制的圆形
-	std::map<rbnode*, QRect> node2Cen;
+	//std::map<rbnode*, QRect> node2Cen;
 
 	int r = 30;
 	int h = 45;
@@ -174,12 +174,12 @@ void rbtreeview::paintEvent(QPaintEvent* event)
 			painter.drawLine(QPoint(cen, hig), QPoint(pcen, hig - h));
 		}
 
-		node2Cen[node] = QRect(QPoint(cen - r / 2, hig - r / 2), QPoint(cen + r / 2, hig + r / 2));
+		m_node2Rect[node] = QRect(QPoint(cen - r / 2, hig - r / 2), QPoint(cen + r / 2, hig + r / 2));
 		col++;
 	}
 
 	// 盖住线
-	for (auto& r : node2Cen)
+	for (auto& r : m_node2Rect)
 	{
 		font = painter.font();
 		font.setPointSize(15);
@@ -222,4 +222,17 @@ void rbtreeview::paintEvent(QPaintEvent* event)
 		rect.moveRight(r.second.right() + 2 * fz);
 		painter.drawText(rect, Qt::AlignCenter, QString::number(count));
 	}
+}
+
+void rbtreeview::mouseDoubleClickEvent(QMouseEvent* event)
+{
+	auto pt = event->pos();
+	for (auto& r : m_node2Rect)
+	{
+		if (r.second.contains(pt))
+		{
+			r.first->red = !r.first->red;
+		}
+	}
+	update();
 }

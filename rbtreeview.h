@@ -27,10 +27,15 @@ protected:
 protected:
 	void paintEvent(QPaintEvent* event) override;
 
+	virtual void mouseDoubleClickEvent(QMouseEvent* event);
+
 private:
 	rbtree m_rbTree;
 
 	// 查找的节点
 	rbnode* m_pFindNode;
+
+	// 记录节点位置
+	std::map<rbnode*, QRect> m_node2Rect;
 };
 
