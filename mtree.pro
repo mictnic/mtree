@@ -8,12 +8,16 @@ TARGET = mtree
 
 HEADERS = \
 	rbtree.h \
-	rbtreeview.h
+	rbtreeview.h \
+	avltree.h \
+	avltreeview.h \
 
 SOURCES = \
 	rbtree.cpp \
 	main.cpp \
-	rbtreeview.cpp
+	rbtreeview.cpp \
+	avltree.cpp \
+	avltreeview.cpp \
 
 DESTDIR = ./bin
 DLLDESTDIR = ./bin

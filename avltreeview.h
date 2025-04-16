@@ -1,17 +1,19 @@
 #pragma once
 
+#include <set>
 #include <QWidget>
-#include "rbtree.h"
+#include "avltree.h"
 
 class QPushButton;
 class QSpinBox;
+class QLineEdit;
 
-class rbtreeview : public QWidget
+class avltreeview : public QWidget
 {
 	Q_OBJECT
 
 public:
-	explicit rbtreeview(QWidget* parent = nullptr, Qt::WindowFlags f = Qt::WindowFlags());
+	explicit avltreeview(QWidget* parent = nullptr, Qt::WindowFlags f = Qt::WindowFlags());
 
 protected slots:
 	void onAdd();
@@ -22,21 +24,20 @@ protected:
 	QPushButton* m_pBtnAdd;
 	QPushButton* m_pBtnFind;
 	QPushButton* m_pBtnDel;
-	QSpinBox* m_pSbxVal;
+	QLineEdit* m_pLetVal;
 
 protected:
 	void paintEvent(QPaintEvent* event) override;
 
-	// 鼠标双击
-	virtual void mouseDoubleClickEvent(QMouseEvent* event);
+	std::vector<int> getNumbers();
 
 private:
-	rbtree m_rbTree;
+	avltree m_avl_tree;
 
 	// 查找的节点
-	rbtree::node* m_pFindNode;
+	std::set<avltree::node*> m_nodes;
 
 	// 记录节点位置
-	std::map<rbtree::node*, QRect> m_node2Rect;
+	std::map<avltree::node*, QRect> m_node2Rect;
 };
 

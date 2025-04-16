@@ -1,4 +1,4 @@
-#include "rbtreeview.h"
+#include "avltreeview.h"
 
 #include <deque>
 #include <set>
@@ -7,10 +7,14 @@
 #include <QSpinBox>
 #include <QBoxLayout>
 #include <QMouseEvent>
+#include <QLineEdit>
+#include <QEventLoop>
+#include <QCoreApplication>
+#include <QThread>
 
 #define L8B(x) QString::fromLocal8Bit(x)
 
-rbtreeview::rbtreeview(QWidget* parent /*= nullptr*/, Qt::WindowFlags f /*= Qt::WindowFlags()*/)
+avltreeview::avltreeview(QWidget* parent /*= nullptr*/, Qt::WindowFlags f /*= Qt::WindowFlags()*/)
 	: QWidget(parent, f)
 {
 	setFixedSize(1000, 800);
@@ -21,10 +25,11 @@ rbtreeview::rbtreeview(QWidget* parent /*= nullptr*/, Qt::WindowFlags f /*= Qt::
 	QHBoxLayout* pLayout = new QHBoxLayout(this);
 	//pLayout->setGeometry(QRect(QPoint(0,0), QPoint(1000,30)));
 	pVLayout->addLayout(pLayout);
-	pLayout->addSpacerItem(new QSpacerItem(500, 20, QSizePolicy::Expanding));
+	//pLayout->addSpacerItem(new QSpacerItem(500, 20, QSizePolicy::Expanding));
 
-	m_pSbxVal = new QSpinBox(this);
-	pLayout->addWidget(m_pSbxVal);
+	m_pLetVal = new QLineEdit(this);
+	m_pLetVal->setSizePolicy(QSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred));
+	pLayout->addWidget(m_pLetVal);
 
 	m_pBtnAdd = new QPushButton(L8B("添加"), this);
 	pLayout->addWidget(m_pBtnAdd);
@@ -34,49 +39,67 @@ rbtreeview::rbtreeview(QWidget* parent /*= nullptr*/, Qt::WindowFlags f /*= Qt::
 
 	m_pBtnFind = new QPushButton(L8B("查找"), this);
 	pLayout->addWidget(m_pBtnFind);
-
-	m_rbTree.add(8);
-	m_rbTree.add(5);
-	m_rbTree.add(3);
-// 	m_rbTree.addNode(4);
-// 	m_rbTree.addNode(2);
-	m_rbTree.add(6);
-	m_rbTree.add(9);
-	m_rbTree.add(11);
- 	m_rbTree.add(10);
-  	m_rbTree.add(12);
-  	m_rbTree.add(13);
-//  	m_rbTree.addNode(19);
-//  	m_rbTree.addNode(15);
-//  	m_rbTree.addNode(16);
-//  	m_rbTree.addNode(17);
+// 	m_avl_tree.add(2);
+// 	m_avl_tree.add(8);
+// 	m_avl_tree.add(5);
+// 	m_avl_tree.add(3);
+//	m_avl_tree.add(4);
+//  	
+// 	m_avl_tree.add(1);
+//  m_avl_tree.add(10);
+//  m_avl_tree.add(12);
+//  m_avl_tree.add(13);
 
 	connect(m_pBtnAdd, SIGNAL(clicked()), SLOT(onAdd()));
 	connect(m_pBtnDel, SIGNAL(clicked()), SLOT(onDel()));
 	connect(m_pBtnFind, SIGNAL(clicked()), SLOT(onFind()));
-
-	m_pFindNode = nullptr;
 }
 
-void rbtreeview::onAdd()
+void avltreeview::onAdd()
 {
-	m_rbTree.add(m_pSbxVal->value());
+	this->setEnabled(false);
+	auto v = getNumbers();
+	for (auto& r : v)
+	{
+		m_avl_tree.add(r);
+		update();
+		qApp->processEvents(QEventLoop::AllEvents);
+		QThread::msleep(10);
+	}
+	this->setEnabled(true);
+}
+
+void avltreeview::onDel()
+{
+	this->setEnabled(false);
+	auto v = getNumbers();
+	for (auto& r : v)
+	{
+		m_avl_tree.del(r);
+		update();
+		qApp->processEvents(QEventLoop::AllEvents);
+		QThread::msleep(10);
+	}
+	this->setEnabled(true);
+}
+
+void avltreeview::onFind()
+{
+	m_nodes.clear();
+	auto v = getNumbers();
+	for (auto& r : v)
+	{
+		m_avl_tree.del(r);
+		auto nd = m_avl_tree.find(r);
+		if (nd)
+		{
+			m_nodes.insert(nd);
+		}
+	}
 	update();
 }
 
-void rbtreeview::onDel()
-{
-	m_rbTree.del(m_pSbxVal->value());
-	update();
-}
-
-void rbtreeview::onFind()
-{
-	m_pFindNode = m_rbTree.find(m_pSbxVal->value());
-	update();
-}
-
-void rbtreeview::paintEvent(QPaintEvent* event)
+void avltreeview::paintEvent(QPaintEvent* event)
 {
 	m_node2Rect.clear();
 
@@ -86,16 +109,16 @@ void rbtreeview::paintEvent(QPaintEvent* event)
 	font.setPointSize(15);
 	painter.setFont(font);
  
-	auto root = m_rbTree.get();
+	auto root = m_avl_tree.get();
 	if (nullptr == root)
 	{
 		return;
 	}
 
-	std::map<rbtree::node*, int> node2Order;
+	std::map<avltree::node*, int> node2Order;
 	int order = 0;
 	{
-		std::deque<rbtree::node*> vv;
+		std::deque<avltree::node*> vv;
 		if (nullptr != root)
 		{
 			vv.push_back(root);
@@ -126,18 +149,15 @@ void rbtreeview::paintEvent(QPaintEvent* event)
 		}
 	}
 
-	// 待绘制的圆形
-	//std::map<rbnode*, QRect> node2Cen;
-
 	int r = 30;
 	int h = 45;
 	int row = 0;
 	int col = 0;
-	std::deque<rbtree::node*> nodes;
-	std::deque<rbtree::node*> nextNodes;
+	std::deque<avltree::node*> nodes;
+	std::deque<avltree::node*> nextNodes;
 	int hbeg = 50;
 	int wbeg = (width() - r * (order + 1)) / 2;
-	nodes.push_back(m_rbTree.get());
+	nodes.push_back(m_avl_tree.get());
 	while (!nodes.empty() || !nextNodes.empty())
 	{
 		if (nodes.empty())
@@ -185,12 +205,12 @@ void rbtreeview::paintEvent(QPaintEvent* event)
 		font.setPointSize(15);
 		painter.setFont(font);
 
-		painter.setBrush(QBrush(r.first->red ? Qt::red : Qt::lightGray, Qt::SolidPattern));
+		painter.setBrush(QBrush(Qt::lightGray, Qt::SolidPattern));
 		painter.drawEllipse(r.second);
 		painter.drawText(r.second, Qt::AlignCenter, QString::number(r.first->key));
 
 		// 左侧标记查找节点
-		if (m_pFindNode == r.first)
+		if (m_nodes.find(r.first) != m_nodes.end())
 		{
 			QRect rect = r.second;
 			auto whalf = rect.width() / 2;
@@ -220,19 +240,29 @@ void rbtreeview::paintEvent(QPaintEvent* event)
 		auto hhalf = rect.height() / 2;
 		rect.adjust(whalf - fz, hhalf - fz, -whalf + fz, -whalf + fz);
 		rect.moveRight(r.second.right() + 2 * fz);
+		rect.moveTop(r.second.top());
 		painter.drawText(rect, Qt::AlignCenter, QString::number(count));
+		rect.moveBottom(r.second.bottom());
+		painter.drawText(rect, Qt::AlignCenter, QString::number(r.first->depth));
 	}
 }
 
-void rbtreeview::mouseDoubleClickEvent(QMouseEvent* event)
+std::vector<int> avltreeview::getNumbers()
 {
-	auto pt = event->pos();
-	for (auto& r : m_node2Rect)
+	std::vector<int> v;
+
+	auto s = m_pLetVal->text();
+	auto ss = s.split(",", QString::SkipEmptyParts);
+	
+	for (auto& r : ss)
 	{
-		if (r.second.contains(pt))
+		bool bOk = false;
+		auto val = r.toInt(&bOk);
+		if (bOk)
 		{
-			r.first->red = !r.first->red;
+			v.push_back(val);
 		}
 	}
-	update();
+
+	return v;
 }

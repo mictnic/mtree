@@ -2,61 +2,58 @@
 
 #include <vector>
 
-struct rbnode
-{
-	rbnode() : red(false), parent(nullptr), left(nullptr), right(nullptr), next(nullptr), key(0) {}
-
-	bool red;
-	rbnode* parent;
-	rbnode* left;
-	rbnode* right;
-	rbnode* next;		// 重复值节点，以链表形式记录
-	int key;
-
-	// value
-};
-
-using rbnode_p = rbnode*;
-using rbnode_p_seq = std::vector<rbnode_p>;
-
 class rbtree
 {
+public:
+	struct rbnode
+	{
+		rbnode() : red(false), parent(nullptr), left(nullptr), right(nullptr), next(nullptr), key(0) {}
+
+		bool red;
+		rbnode* parent;
+		rbnode* left;
+		rbnode* right;
+		rbnode* next; // 重复值节点，以链表形式记录
+		int key;
+	};
+	using node = rbnode;
+
 public:
 	rbtree();
 	~rbtree();
 
 	// 添加节点
-	void addNode(int key);
+	void add(int key);
 	// 删除节点
-	void delNode(int key);
+	void del(int key);
 	// 查找节点
-	rbnode* findNode(int key);
+	node* find(int key);
 
 	// 获取根节点
-	rbnode* getRoot();
+	node* get();
 
 	// 获取深度
-	int getDepth();
+	int depth();
 
 protected:
 	// 添加节点后调整
-	void add_modify(rbnode* parent, rbnode* current);
+	void add_modify(node* parent, node* current);
 
 	// 删除节点后调整
-	void del_modify(rbnode* parent, rbnode* current);
+	void del_modify(node* parent, node* current);
 
 	// 双黑节点调整
-	void del_modify_double_black(rbnode* parent, rbnode* current);
+	void del_modify_double_black(node* parent, node* current);
 
 	// 旋转
-	void rotate(rbnode* parent, rbnode* current);
+	void rotate(node* parent, node* current);
 
 	// 递归获取深度
-	int innerGetDepth(rbnode* node);
+	int inner_depth(node* node);
 
 	// 查找节点
-	void innerfindNode(rbnode** parent, rbnode**& current, int key);
+	void inner_find(node** parent, node**& current, int key);
 
 private:
-	rbnode* m_root;
+	node* m_root;
 };

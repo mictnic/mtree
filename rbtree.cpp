@@ -1,9 +1,6 @@
 ﻿#include "rbtree.h"
 
-#include <deque>
-#include <QApplication>
-#include <QWidget>
-#include <QEvent>
+#include <cassert>
 
 rbtree::rbtree() : m_root(nullptr)
 {
@@ -12,25 +9,25 @@ rbtree::rbtree() : m_root(nullptr)
 
 rbtree::~rbtree()
 {
-
+	// destroy TODO
 }
 
-void rbtree::addNode(int key)
+void rbtree::add(int key)
 {
 	// 查找节点
-	rbnode** current = nullptr;
-	rbnode* parent = nullptr;
-	innerfindNode(&parent, current, key);
+	node** current = nullptr;
+	node* parent = nullptr;
+	inner_find(&parent, current, key);
 	if (nullptr != (*current))	// 已有关键字
 	{
 		auto next = &(*current)->next;
 		while (*next) next = &(*next)->next;
-		*next = new rbnode();
+		*next = new node();
 		(*next)->key = key;
 	}
 	else // 未找到关键字
 	{
-		*current = new rbnode();
+		*current = new node();
 		(*current)->key = key;
 		(*current)->parent = parent;
 		(*current)->red = true;
@@ -40,12 +37,12 @@ void rbtree::addNode(int key)
 	}
 }
 
-void rbtree::delNode(int key)
+void rbtree::del(int key)
 {
 	// 找到节点
-	rbnode** current = nullptr;
-	rbnode* parent = nullptr;
-	innerfindNode(&parent, current, key);
+	node** current = nullptr;
+	node* parent = nullptr;
+	inner_find(&parent, current, key);
 
 	auto cur = *current;
 	if (nullptr == cur)
@@ -79,25 +76,25 @@ void rbtree::delNode(int key)
 	del_modify(parent, cur);
 }
 
-rbnode* rbtree::findNode(int key)
+rbtree::node* rbtree::find(int key)
 {
-	rbnode** current = nullptr;
-	rbnode* parent = nullptr;
-	innerfindNode(&parent, current, key);
+	node** current = nullptr;
+	node* parent = nullptr;
+	inner_find(&parent, current, key);
 	return *current;
 }
 
-rbnode* rbtree::getRoot()
+rbtree::node* rbtree::get()
 {
 	return m_root;
 }
 
-int rbtree::getDepth()
+int rbtree::depth()
 {
-	return innerGetDepth(m_root);
+	return inner_depth(m_root);
 }
 
-void rbtree::add_modify(rbnode* parent, rbnode* current)
+void rbtree::add_modify(node* parent, node* current)
 {
 	//// 分情况讨论
 	//1.根节点，不需要调整
@@ -114,7 +111,7 @@ void rbtree::add_modify(rbnode* parent, rbnode* current)
 	}
 
 	//3.父节点红色，叔叔节点黑色/空
-	rbnode* uncle = parent->parent->left == parent ? parent->parent->right : parent->parent->left;
+	node* uncle = parent->parent->left == parent ? parent->parent->right : parent->parent->left;
 	if (nullptr == uncle || !uncle->red)
 	{
 		//3.1.左左型、右右型
@@ -142,7 +139,7 @@ void rbtree::add_modify(rbnode* parent, rbnode* current)
 	add_modify(parent->parent->parent, parent->parent);	// 递归向上调整
 }
 
-void rbtree::del_modify(rbnode* parent, rbnode* current)
+void rbtree::del_modify(node* parent, node* current)
 {
 	//1. 删除的是根节点
 	if (current == m_root)
@@ -281,7 +278,7 @@ void rbtree::del_modify(rbnode* parent, rbnode* current)
 	del_modify_double_black(parent, *pcur);
 }
 
-void rbtree::del_modify_double_black(rbnode* parent, rbnode* current)
+void rbtree::del_modify_double_black(node* parent, node* current)
 {
 	// 0. 父节点为空，调整结束
 	if (nullptr == parent)
@@ -347,7 +344,7 @@ void rbtree::del_modify_double_black(rbnode* parent, rbnode* current)
 	del_modify_double_black(parent->parent, parent);
 }
 
-void rbtree::rotate(rbnode* parent, rbnode* current)
+void rbtree::rotate(node* parent, node* current)
 {
 	if (current == parent->left)
 	{
@@ -398,23 +395,23 @@ void rbtree::rotate(rbnode* parent, rbnode* current)
 	}
 }
 
-int rbtree::innerGetDepth(rbnode* node)
+int rbtree::inner_depth(node* node)
 {
 	if (nullptr == node)
 	{
 		return 0;
 	}
 
-	int l = innerGetDepth(node->left);
-	int r = innerGetDepth(node->right);
+	int l = inner_depth(node->left);
+	int r = inner_depth(node->right);
 	
 	return l >= r ? l + 1 : r + 1;
 }
 
-void rbtree::innerfindNode(rbnode** parent, rbnode**& current, int key)
+void rbtree::inner_find(node** parent, node**& current, int key)
 {
 	current = &m_root;
-	*parent = m_root;
+	*parent = nullptr;
 	while (*current && (*current)->key != key)
 	{
 		if (key < (*current)->key)
