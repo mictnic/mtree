@@ -11,6 +11,7 @@ HEADERS = \
 	rbtreeview.h \
 	avltree.h \
 	avltreeview.h \
+	btree.h \
 
 SOURCES = \
 	rbtree.cpp \
@@ -18,6 +19,7 @@ SOURCES = \
 	rbtreeview.cpp \
 	avltree.cpp \
 	avltreeview.cpp \
+	btree.cpp \
 
 DESTDIR = ./bin
 DLLDESTDIR = ./bin
